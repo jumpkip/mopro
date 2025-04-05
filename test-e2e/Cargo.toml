@@ -19,7 +19,7 @@ name = "web"
 [dependencies]
 mopro-ffi = { path = "../mopro-ffi", features = ["halo2", "circom"] }
 mopro-wasm = { path = "../mopro-wasm" }
-uniffi = { workspace = true } 
+uniffi = { workspace = true }
 
 # Circom dependencies
 rust-witness = "0.1"
@@ -30,8 +30,8 @@ halo2-keccak-256 = { git = "https://github.com/ElusAegis/halo2-keccak-stable.git
 plonk-fibonacci = { workspace = true }
 hyperplonk-fibonacci = { workspace = true }
 gemini-fibonacci = { workspace = true }
-thiserror = "=2.0.3"
-circom-prover = { version = "0.1.0", path = "../circom-prover" }
+thiserror = "2.0.12"
+circom-prover = { path = "../circom-prover" }
 
 [build-dependencies]
 mopro-ffi = { path = "../mopro-ffi" }
@@ -45,5 +45,4 @@ rust-witness = "0.1"
 empty-line-after-doc-comments = "allow"
 
 [dev-dependencies]
-uniffi = {  workspace = true, features = ["bindgen-tests"] }
-
+uniffi = { workspace = true, features = ["bindgen-tests"] }
