@@ -1,10 +1,42 @@
 #![allow(unexpected_cfgs)]
+
+#[cfg(feature = "build")]
 pub mod app_config;
+
+// UniFFI re-export
+//
+// Uniffi macros use fully qualified paths (`::uniffi::*`) internally.
+// To allow downstream crates to transparently resolve these macros to `mopro_ffi`,
+// users must alias it (`extern crate mopro_ffi as uniffi;`, automated via `app!` macro).
+//
+// However, for this alias to work correctly, `mopro_ffi` must provide the exact same
+// exported items as the original `uniffi`. Hence, we re-export all individual items.
+#[cfg(feature = "uniffi")]
+pub use uniffi::*;
+
+#[cfg(feature = "uniffi")]
+#[macro_export]
+macro_rules! uniffi_setup {
+    () => {
+        // `::uniffi` must be available in the caller’s extern-prelude.
+        extern crate mopro_ffi as uniffi;
+    };
+}
+
+#[cfg(not(feature = "uniffi"))]
+#[macro_export]
+macro_rules! uniffi_setup {
+    () => {
+        // No-op when `uniffi` feature isn't enabled in `mopro_ffi`.
+    };
+}
 
 #[cfg(feature = "circom")]
 mod circom;
 #[cfg(feature = "halo2")]
 mod halo2;
+#[cfg(feature = "noir")]
+mod noir;
 
 #[cfg(feature = "circom")]
 pub use circom::{generate_circom_proof_wtns, verify_circom_proof};
@@ -12,16 +44,21 @@ pub use circom::{generate_circom_proof_wtns, verify_circom_proof};
 #[cfg(feature = "circom")]
 pub use circom_prover::{prover, witness};
 
+#[cfg(feature = "circom-witnesscalc")]
+pub use circom_prover::graph;
+
 #[cfg(feature = "halo2")]
 pub use halo2::{Halo2ProveFn, Halo2VerifyFn};
+
+#[cfg(feature = "noir")]
+pub use noir::{generate_noir_proof, verify_noir_proof};
 
 #[cfg(not(feature = "circom"))]
 #[macro_export]
 macro_rules! circom_app {
     ($result:ty, $proof:ty, $err:ty, $proof_lib:ty) => {
         // TODO: fix this if CLI template can be customized
-        #[allow(dead_code)]
-        #[cfg_attr(not(disable_uniffi_export), uniffi::export)]
+        #[cfg_attr(not(feature = "no_uniffi_exports"), uniffi::export)]
         fn generate_circom_proof(
             zkey_path: String,
             circuit_inputs: String,
@@ -31,8 +68,7 @@ macro_rules! circom_app {
         }
 
         // TODO: fix this if CLI template can be customized
-        #[allow(dead_code)]
-        #[cfg_attr(not(disable_uniffi_export), uniffi::export)]
+        #[cfg_attr(not(feature = "no_uniffi_exports"), uniffi::export)]
         fn verify_circom_proof(
             zkey_path: String,
             proof_result: $result,
@@ -48,8 +84,7 @@ macro_rules! circom_app {
 macro_rules! halo2_app {
     ($result:ty, $err:ty) => {
         // TODO: fix this if CLI template can be customized
-        #[allow(dead_code)]
-        #[cfg_attr(not(disable_uniffi_export), uniffi::export)]
+        #[cfg_attr(not(feature = "no_uniffi_exports"), uniffi::export)]
         fn generate_halo2_proof(
             srs_path: String,
             pk_path: String,
@@ -59,8 +94,7 @@ macro_rules! halo2_app {
         }
 
         // TODO: fix this if CLI template can be customized
-        #[allow(dead_code)]
-        #[cfg_attr(not(disable_uniffi_export), uniffi::export)]
+        #[cfg_attr(not(feature = "no_uniffi_exports"), uniffi::export)]
         fn verify_halo2_proof(
             srs_path: String,
             vk_path: String,
@@ -72,12 +106,36 @@ macro_rules! halo2_app {
     };
 }
 
+#[cfg(not(feature = "noir"))]
+#[macro_export]
+macro_rules! noir_app {
+    ($err:ty) => {
+        // TODO: fix this if CLI template can be customized
+        #[cfg_attr(not(feature = "no_uniffi_exports"), uniffi::export)]
+        fn generate_noir_proof(
+            circuit_path: String,
+            srs_path: Option<String>,
+            inputs: Vec<String>,
+        ) -> Result<Vec<u8>, $err> {
+            panic!("Noir is not enabled in this build. Please pass `noir` feature to `mopro-ffi` to enable Noir.")
+        }
+
+        // TODO: fix this if CLI template can be customized
+        #[cfg_attr(not(feature = "no_uniffi_exports"), uniffi::export)]
+        fn verify_noir_proof(circuit_path: String, proof: Vec<u8>) -> Result<bool, $err> {
+            panic!("Noir is not enabled in this build. Please pass `noir` feature to `mopro-ffi` to enable Noir.")
+        }
+    };
+}
+
 #[derive(Debug, thiserror::Error)]
 pub enum MoproError {
     #[error("CircomError: {0}")]
     CircomError(String),
     #[error("Halo2Error: {0}")]
     Halo2Error(String),
+    #[error("NoirError: {0}")]
+    NoirError(String),
 }
 
 //
@@ -154,10 +212,22 @@ pub struct Halo2ProofResult {
 ///     plonk_fibonacci::verify
 /// );
 /// ```
+///
+/// # Noir Example
+/// You don't need to generate Witness Generation functions first, like `Circom` or `Halo2` does.
+/// All you need to do is to setup the Mopro FFi library as below.
+///
+/// ```ignore
+/// // Setup the Mopro FFI library
+/// mopro_ffi::app!();
+///
+/// ```
+///
 #[macro_export]
 macro_rules! app {
     () => {
-        uniffi::setup_scaffolding!("mopro");
+        mopro_ffi::uniffi_setup!();
+        uniffi::setup_scaffolding!();
 
         // This should be declared into this macro due to Uniffi's limitation
         // Please refer this issue: https://github.com/mozilla/uniffi-rs/issues/2257
@@ -167,6 +237,8 @@ macro_rules! app {
             CircomError(String),
             #[error("Halo2Error: {0}")]
             Halo2Error(String),
+            #[error("NoirError: {0}")]
+            NoirError(String),
         }
 
         impl From<mopro_ffi::MoproError> for MoproError {
@@ -174,6 +246,7 @@ macro_rules! app {
                 match err {
                     mopro_ffi::MoproError::CircomError(e) => Self::CircomError(e),
                     mopro_ffi::MoproError::Halo2Error(e) => Self::Halo2Error(e),
+                    mopro_ffi::MoproError::NoirError(e) => Self::NoirError(e),
                     _ => panic!("Unhandled error type: {}", err),
                 }
             }
@@ -307,5 +380,7 @@ macro_rules! app {
         mopro_ffi::circom_app!(CircomProofResult, CircomProof, MoproError, ProofLib);
 
         mopro_ffi::halo2_app!(Halo2ProofResult, MoproError);
+
+        mopro_ffi::noir_app!(MoproError);
     };
 }

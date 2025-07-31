@@ -7,6 +7,8 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		2A4190692DF1CCE6004F1A4F /* noir_multiplier2.json in Resources */ = {isa = PBXBuildFile; fileRef = 2A4190682DF1CCE6004F1A4F /* noir_multiplier2.json */; };
+		2A41906B2DF1CCED004F1A4F /* noir_multiplier2.srs in Resources */ = {isa = PBXBuildFile; fileRef = 2A41906A2DF1CCED004F1A4F /* noir_multiplier2.srs */; };
 		2A59922F2CC7750200135402 /* multiplier2_final.zkey in Resources */ = {isa = PBXBuildFile; fileRef = 2A59922E2CC7750200135402 /* multiplier2_final.zkey */; };
 		2A5992332CC7750C00135402 /* plonk_fibonacci_vk.bin in Resources */ = {isa = PBXBuildFile; fileRef = 2A5992322CC7750C00135402 /* plonk_fibonacci_vk.bin */; };
 		2A5992342CC7750C00135402 /* plonk_fibonacci_srs.bin in Resources */ = {isa = PBXBuildFile; fileRef = 2A5992312CC7750C00135402 /* plonk_fibonacci_srs.bin */; };
@@ -33,6 +35,8 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
+		2A4190682DF1CCE6004F1A4F /* noir_multiplier2.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = noir_multiplier2.json; sourceTree = "<group>"; };
+		2A41906A2DF1CCED004F1A4F /* noir_multiplier2.srs */ = {isa = PBXFileReference; lastKnownFileType = file; path = noir_multiplier2.srs; sourceTree = "<group>"; };
 		2A5991EC2CC7722900135402 /* MoproApp.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = MoproApp.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		2A5991FC2CC7722A00135402 /* MoproAppTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = MoproAppTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		2A5992062CC7722A00135402 /* MoproAppUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = MoproAppUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -100,6 +104,8 @@
 				2A5992302CC7750C00135402 /* plonk_fibonacci_pk.bin */,
 				2A5992312CC7750C00135402 /* plonk_fibonacci_srs.bin */,
 				2A5992322CC7750C00135402 /* plonk_fibonacci_vk.bin */,
+				2A4190682DF1CCE6004F1A4F /* noir_multiplier2.json */,
+				2A41906A2DF1CCED004F1A4F /* noir_multiplier2.srs */,
 			);
 			sourceTree = "<group>";
 		};
@@ -244,8 +250,10 @@
 			files = (
 				2A5992332CC7750C00135402 /* plonk_fibonacci_vk.bin in Resources */,
 				2A5992342CC7750C00135402 /* plonk_fibonacci_srs.bin in Resources */,
+				2A41906B2DF1CCED004F1A4F /* noir_multiplier2.srs in Resources */,
 				2A5992352CC7750C00135402 /* plonk_fibonacci_pk.bin in Resources */,
 				2A59922F2CC7750200135402 /* multiplier2_final.zkey in Resources */,
+				2A4190692DF1CCE6004F1A4F /* noir_multiplier2.json in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -433,7 +441,6 @@
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_ASSET_PATHS = "\"MoproApp/Preview Content\"";
-				DEVELOPMENT_TEAM = N3ESL929H7;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
@@ -462,7 +469,6 @@
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_ASSET_PATHS = "\"MoproApp/Preview Content\"";
-				DEVELOPMENT_TEAM = N3ESL929H7;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
@@ -489,7 +495,6 @@
 				BUNDLE_LOADER = "$(TEST_HOST)";
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_TEAM = N3ESL929H7;
 				GENERATE_INFOPLIST_FILE = YES;
 				IPHONEOS_DEPLOYMENT_TARGET = 18.0;
 				MARKETING_VERSION = 1.0;
@@ -508,7 +513,6 @@
 				BUNDLE_LOADER = "$(TEST_HOST)";
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_TEAM = N3ESL929H7;
 				GENERATE_INFOPLIST_FILE = YES;
 				IPHONEOS_DEPLOYMENT_TARGET = 18.0;
 				MARKETING_VERSION = 1.0;
@@ -526,7 +530,6 @@
 			buildSettings = {
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_TEAM = N3ESL929H7;
 				GENERATE_INFOPLIST_FILE = YES;
 				MARKETING_VERSION = 1.0;
 				PRODUCT_BUNDLE_IDENTIFIER = mopro.MoproAppUITests;
@@ -543,7 +546,6 @@
 			buildSettings = {
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_TEAM = N3ESL929H7;
 				GENERATE_INFOPLIST_FILE = YES;
 				MARKETING_VERSION = 1.0;
 				PRODUCT_BUNDLE_IDENTIFIER = mopro.MoproAppUITests;

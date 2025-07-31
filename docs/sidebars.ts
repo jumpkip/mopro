@@ -23,6 +23,11 @@ const sidebars: SidebarsConfig = {
             id: 'projects',
         },
         {
+            type: 'doc',
+            label: 'Architectures',
+            id: 'architectures',
+        },
+        {
             type: 'category',
             label: 'Setup',
             items: [
@@ -41,17 +46,23 @@ const sidebars: SidebarsConfig = {
                 'adapters/overview',
                 'adapters/circom',
                 'adapters/halo2',
+                'adapters/noir',
             ]
         },
         {
-            type: 'doc',
-            label: 'Mopro FFI',
-            id: 'mopro-ffi',
-        },
-        {
-            type: 'doc',
-            label: 'Mopro WASM',
-            id: 'mopro-wasm',
+            type: 'category',
+            label: 'Rust Crates',
+            items: [
+                'crates/mopro-ffi',
+                'crates/mopro-wasm',
+                'crates/mopro-cli',
+                'crates/circom-prover',
+                'crates/rust-rapidsnark',
+                'crates/rust-witness',
+                'crates/witnesscalc_adapter',
+                'crates/ark-zkey',
+                'crates/noir-rs',
+            ]
         },
         {
             type: 'doc',

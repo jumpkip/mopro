@@ -3,33 +3,6 @@
 //  MoproApp
 //
 import SwiftUI
-import moproFFI
-
-func serializeOutputs(_ stringArray: [String]) -> [UInt8] {
-    var bytesArray: [UInt8] = []
-    let length = stringArray.count
-    var littleEndianLength = length.littleEndian
-    let targetLength = 32
-    withUnsafeBytes(of: &littleEndianLength) {
-        bytesArray.append(contentsOf: $0)
-    }
-    for value in stringArray {
-        // TODO: should handle 254-bit input
-        var littleEndian = Int32(value)!.littleEndian
-        var byteLength = 0
-        withUnsafeBytes(of: &littleEndian) {
-            bytesArray.append(contentsOf: $0)
-            byteLength = byteLength + $0.count
-        }
-        if byteLength < targetLength {
-            let paddingCount = targetLength - byteLength
-            let paddingArray = [UInt8](repeating: 0, count: paddingCount)
-            bytesArray.append(contentsOf: paddingArray)
-        }
-    }
-    return bytesArray
-}
-
 
 struct ContentView: View {
     @State private var textViewText = ""
@@ -37,14 +10,19 @@ struct ContentView: View {
     @State private var isCircomVerifyButtonEnabled = false
     @State private var isHalo2roveButtonEnabled = true
     @State private var isHalo2VerifyButtonEnabled = false
+    @State private var isNoirProveButtonEnabled = true
+    @State private var isNoirVerifyButtonEnabled = false
     @State private var generatedCircomProof: CircomProof?
     @State private var circomPublicInputs: [String]?
     @State private var generatedHalo2Proof: Data?
     @State private var halo2PublicInputs: Data?
+    @State private var generatedNoirProof: Data?
     private let zkeyPath = Bundle.main.path(forResource: "multiplier2_final", ofType: "zkey")!
     private let srsPath = Bundle.main.path(forResource: "plonk_fibonacci_srs.bin", ofType: "")!
     private let vkPath = Bundle.main.path(forResource: "plonk_fibonacci_vk.bin", ofType: "")!
     private let pkPath = Bundle.main.path(forResource: "plonk_fibonacci_pk.bin", ofType: "")!
+    private let noirSrsPath = Bundle.main.path(forResource: "noir_multiplier2.srs", ofType: "")!
+    private let noirCircuitPath = Bundle.main.path(forResource: "noir_multiplier2.json", ofType: "")!
     
     var body: some View {
         VStack(spacing: 10) {
@@ -55,6 +33,8 @@ struct ContentView: View {
             Button("Verify Circom", action: runCircomVerifyAction).disabled(!isCircomVerifyButtonEnabled).accessibilityIdentifier("verifyCircom")
             Button("Prove Halo2", action: runHalo2ProveAction).disabled(!isHalo2roveButtonEnabled).accessibilityIdentifier("proveHalo2")
             Button("Verify Halo2", action: runHalo2VerifyAction).disabled(!isHalo2VerifyButtonEnabled).accessibilityIdentifier("verifyHalo2")
+            Button("Prove Noir", action: runNoirProveAction).disabled(!isNoirProveButtonEnabled).accessibilityIdentifier("proveNoir")
+            Button("Verify Noir", action: runNoirVerifyAction).disabled(!isNoirVerifyButtonEnabled).accessibilityIdentifier("verifyNoir")
 
             ScrollView {
                 Text(textViewText)
@@ -79,9 +59,9 @@ extension ContentView {
 
             // Expected outputs
             let outputs: [String] = [String(c), String(a)]
-            
+
             let start = CFAbsoluteTimeGetCurrent()
-            
+
             // Generate Proof
             let generateProofResult = try generateCircomProof(zkeyPath: zkeyPath, circuitInputs: input_str, proofLib: ProofLib.arkworks)
             assert(!generateProofResult.proof.a.x.isEmpty, "Proof should not be empty")
@@ -89,13 +69,13 @@ extension ContentView {
 
             let end = CFAbsoluteTimeGetCurrent()
             let timeTaken = end - start
-            
+
             // Store the generated proof and public inputs for later verification
             generatedCircomProof = generateProofResult.proof
             circomPublicInputs = generateProofResult.inputs
-            
+
             textViewText += "\(String(format: "%.3f", timeTaken))s 1️⃣\n"
-            
+
             isCircomVerifyButtonEnabled = true
         } catch {
             textViewText += "\nProof generation failed: \(error.localizedDescription)\n"
@@ -108,7 +88,7 @@ extension ContentView {
             textViewText += "Proof has not been generated yet.\n"
             return
         }
-
+        
         textViewText += "Verifying Circom proof... "
         do {
             let start = CFAbsoluteTimeGetCurrent()
@@ -194,6 +174,65 @@ extension ContentView {
             print("\nMoproError: \(error)")
         } catch {
             print("\nUnexpected error: \(error)")
+        }
+    }
+
+    func runNoirProveAction() {
+        textViewText += "Generating Noir proof...\n"
+
+        do {
+            let inputs: [String] = ["5", "3"]
+
+            DispatchQueue.global(qos: .userInitiated).async {
+                let start = CFAbsoluteTimeGetCurrent()
+                do {
+                    // Generate the proof
+                    let proofData = try! generateNoirProof(circuitPath: noirCircuitPath, srsPath: noirSrsPath, inputs: inputs)
+
+                    let end = CFAbsoluteTimeGetCurrent()
+                    let timeTaken = end - start
+
+                    generatedNoirProof = proofData
+                    textViewText += "\(String(format: "%.3f", timeTaken))s 1️⃣\n"
+
+                    isNoirVerifyButtonEnabled = true
+                } catch {
+                    textViewText += "Proof generation failed: \(error.localizedDescription)\n"
+                }
+            }
+
+        } catch {
+            textViewText += "Error loading or parsing input JSON: \(error.localizedDescription)\n"
+        }
+    }
+
+    func runNoirVerifyAction() {
+        guard let proofData = generatedNoirProof else {
+            textViewText += "Error: Proof data is not available. Generate proof first.\n"
+            return
+        }
+
+        textViewText += "Verifying Noir proof...\n"
+
+        DispatchQueue.global(qos: .userInitiated).async {
+            let start = CFAbsoluteTimeGetCurrent()
+            do {
+                // Verify the proof
+                let isValid = try! verifyNoirProof(circuitPath: noirCircuitPath, proof: proofData)
+
+                let end = CFAbsoluteTimeGetCurrent()
+                let timeTaken = end - start
+
+                if isValid {
+                    textViewText += "\(String(format: "%.3f", timeTaken))s 2️⃣\n"
+                } else {
+                    textViewText += "\nProof verification failed.\n"
+                }
+
+                isNoirVerifyButtonEnabled = false
+            } catch {
+                self.textViewText += "Verification failed: \(error.localizedDescription)\n"
+            }
         }
     }
 }

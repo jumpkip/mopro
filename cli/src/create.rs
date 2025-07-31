@@ -1,8 +1,7 @@
 use std::env;
 use std::path::PathBuf;
 
-use crate::config::read_config;
-use crate::constants::{Framework, Platform};
+use crate::constants::Framework;
 use crate::style;
 use anyhow::Error;
 use console::Term;
@@ -11,23 +10,25 @@ use dialoguer::Select;
 
 mod android;
 mod ios;
-use android::Android;
-use ios::Ios;
+pub use android::Android;
+pub use ios::Ios;
 mod web;
-use web::Web;
+pub use web::Web;
 mod flutter;
-use flutter::Flutter;
+pub use flutter::Flutter;
 mod react_native;
-use react_native::ReactNative;
+pub use react_native::ReactNative;
 pub mod utils;
+pub mod write_toml;
 
-trait Create {
+pub trait Create {
     const NAME: &'static str;
     fn create(project_dir: PathBuf) -> Result<(), Error>;
     fn print_message();
 }
 
 pub fn create_project(arg_framework: &Option<String>) -> anyhow::Result<()> {
+    // 1. Determine framework
     let framework: String = match arg_framework.as_deref() {
         None => select_framework()?,
         Some(m) => {
@@ -40,7 +41,9 @@ pub fn create_project(arg_framework: &Option<String>) -> anyhow::Result<()> {
         }
     };
 
+    // 2. Determine platform if required
     let project_dir = env::current_dir()?;
+
     match Framework::parse_from_str(&framework) {
         Framework::Ios => Ios::create(project_dir)?,
         Framework::Android => Android::create(project_dir)?,
@@ -75,49 +78,12 @@ fn select_framework() -> anyhow::Result<String> {
 }
 
 fn get_target_platforms_with_status() -> anyhow::Result<(Vec<String>, Vec<bool>)> {
-    let current_dir = env::current_dir()?;
-    let config = read_config(&current_dir.join("Config.toml"))?;
-
     let mut items = Vec::new();
     let mut unselectable = Vec::new();
 
     for framework_str in Framework::all_strings() {
-        let framework = Framework::parse_from_str(framework_str);
-        match framework {
-            Framework::Flutter | Framework::ReactNative => {
-                // Adding more information to the list
-                let requires = [Platform::Ios, Platform::Android];
-                let missing: Vec<&str> = requires
-                    .iter()
-                    .filter(|&req| !config.target_platforms.contains(req.as_str()))
-                    .map(|r| r.as_str())
-                    .collect();
-
-                if !missing.is_empty() {
-                    items.push(format!(
-                        "{:<12} - Requires {} binding(s)",
-                        framework_str.to_string(),
-                        missing.join("/")
-                    ));
-                    unselectable.push(true);
-                } else {
-                    items.push(framework_str.to_string());
-                    unselectable.push(false);
-                }
-            }
-            _ => {
-                if config.target_platforms.contains(framework_str) {
-                    items.push(framework_str.to_string());
-                    unselectable.push(false);
-                } else {
-                    items.push(format!(
-                        "{:<12} - Require binding",
-                        framework_str.to_string()
-                    ));
-                    unselectable.push(true);
-                }
-            }
-        }
+        items.push(framework_str.to_string());
+        unselectable.push(false);
     }
 
     Ok((items, unselectable))

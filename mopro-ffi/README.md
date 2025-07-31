@@ -5,7 +5,7 @@
 Key features include:
 
 -   **Function Serialization and Export:** Enables serialization and export of functions within each proving system. To generate FFI bindings for different targets, inputs and outputs must conform to the specific types defined in [uniffi](https://mozilla.github.io/uniffi-rs/0.29/types/builtin_types.html).
-    -   Supported proving systems: `circom`, `halo2`.
+    -   Supported proving systems: `circom`, `halo2` and `noir`.
 -   **Executable Binaries:** Provides pre-built binaries, allowing developers to generate bindings for various targets effortlessly.
     -   Supported targets: `swift`, `kotlin`.
 -   **Customize Exported Functions:** Supports the ability to customize the exported functions. Users can define the functions with [procedural macros](https://mozilla.github.io/uniffi-rs/0.29/proc_macro/index.html).
@@ -13,6 +13,11 @@ Key features include:
 ## Usage
 
 -   Please check out the [Rust Setup for Android/iOS Bindings](https://zkmopro.org/docs/setup/rust-setup) for integrating `mopro-ffi` into your project.
+-   To learn more about each adapter, please refer to the
+    -   [Circom Adapter](https://zkmopro.org/docs/adapters/circom)
+    -   [Halo2 Adapter](https://zkmopro.org/docs/adapters/halo2)
+    -   [Noir Adapter](https://zkmopro.org/docs/adapters/noir)
+-   For building a custom prover, take a look at the [Custom Adapter Examples](https://zkmopro.org/docs/adapters/overview/#custom-adapters).
 
 ## Community
 

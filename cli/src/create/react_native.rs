@@ -1,4 +1,5 @@
-use super::{Create, Framework};
+use super::Create;
+use crate::constants::Platform;
 use crate::create::utils::{
     check_bindings, copy_android_bindings, copy_ios_bindings, copy_keys,
     download_and_extract_template,
@@ -15,8 +16,8 @@ impl Create for ReactNative {
     const NAME: &'static str = "react-native";
 
     fn create(project_dir: PathBuf) -> Result<()> {
-        let ios_bindings_dir = check_bindings(&project_dir, Framework::Ios)?;
-        let android_bindings_dir = check_bindings(&project_dir, Framework::Android)?;
+        let ios_bindings_dir = check_bindings(&project_dir, Platform::Ios)?;
+        let android_bindings_dir = check_bindings(&project_dir, Platform::Android)?;
 
         let target_dir = project_dir.join(Self::NAME);
         if target_dir.exists() {
@@ -35,13 +36,17 @@ impl Create for ReactNative {
         fs::rename(react_native_dir, &target_dir)?;
 
         let mopro_module_dir = target_dir.join("modules/mopro");
-        copy_ios_bindings(ios_bindings_dir, mopro_module_dir.join("ios"))?;
+        if let Some(ios_bindings_dir) = ios_bindings_dir {
+            copy_ios_bindings(ios_bindings_dir, mopro_module_dir.join("ios"))?;
+        }
 
-        copy_android_bindings(
-            &android_bindings_dir,
-            &mopro_module_dir.join("android"),
-            "java",
-        )?;
+        if let Some(android_bindings_dir) = android_bindings_dir {
+            copy_android_bindings(
+                &android_bindings_dir,
+                &mopro_module_dir.join("android"),
+                "java",
+            )?;
+        }
 
         let assets_dir = target_dir.join("assets/keys");
         fs::remove_dir_all(&assets_dir)?;

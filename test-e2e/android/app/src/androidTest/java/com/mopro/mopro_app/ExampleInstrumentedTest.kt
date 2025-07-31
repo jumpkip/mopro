@@ -1,6 +1,7 @@
 package com.mopro.mopro_app
 
 import MultiplierComponent
+import NoirComponent
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithTag
@@ -44,10 +45,29 @@ class ExampleInstrumentedTest {
 
         // Test click circom verify proof button
         // Wait until the second button is enabled
-        Thread.sleep(500)
+        Thread.sleep(2000)
 
         composeTestRule.onNodeWithTag("circomVerifyProofButton").performClick()
         composeTestRule.onNodeWithTag("circomVerifyProofButton").assertIsDisplayed()
+    }
+
+    @Test
+    fun testRapidsnarkButtonClick() {
+        // Set up the Compose UI
+        composeTestRule.setContent {
+            MultiplierComponent() // Replace with the actual Composable function
+        }
+
+        // Test click circom rapidnsark generate proof button
+        composeTestRule.onNodeWithTag("rapidsnarkGenerateProofButton").performClick()
+        composeTestRule.onNodeWithTag("rapidsnarkGenerateProofButton").assertIsDisplayed()
+
+        // Test click circom rapidnsark verify proof button
+        // Wait until the second button is enabled
+        Thread.sleep(2000)
+
+        composeTestRule.onNodeWithTag("rapidsnarkVerifyProofButton").performClick()
+        composeTestRule.onNodeWithTag("rapidsnarkVerifyProofButton").assertIsDisplayed()
     }
 
     @Test
@@ -63,10 +83,28 @@ class ExampleInstrumentedTest {
 
         // Test click circom verify proof button
         // Wait until the second button is enabled
-        Thread.sleep(500)
+        Thread.sleep(2000)
 
         composeTestRule.onNodeWithTag("halo2VerifyProofButton").performClick()
         composeTestRule.onNodeWithTag("halo2VerifyProofButton").assertIsDisplayed()
     }
 
+    @Test
+    fun testNoirButtonClick() {
+        // Set up the Compose UI
+        composeTestRule.setContent {
+            NoirComponent() // Replace with the actual Composable function
+        }
+
+        // Test click circom generate proof button
+        composeTestRule.onNodeWithTag("noirGenerateProofButton").performClick()
+        composeTestRule.onNodeWithTag("noirGenerateProofButton").assertIsDisplayed()
+
+        // Test click circom verify proof button
+        // Wait until the second button is enabled
+        Thread.sleep(2000)
+
+        composeTestRule.onNodeWithTag("noirVerifyProofButton").performClick()
+        composeTestRule.onNodeWithTag("noirVerifyProofButton").assertIsDisplayed()
+    }
 }

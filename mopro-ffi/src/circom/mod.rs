@@ -17,8 +17,7 @@ use std::str::FromStr;
 #[macro_export]
 macro_rules! circom_app {
     ($result:ty, $proof:ty, $err:ty, $proof_lib:ty) => {
-        #[allow(dead_code)]
-        #[cfg_attr(not(disable_uniffi_export), uniffi::export)]
+        #[cfg_attr(not(feature = "no_uniffi_exports"), uniffi::export)]
         fn generate_circom_proof(
             zkey_path: String,
             circuit_inputs: String,
@@ -49,8 +48,7 @@ macro_rules! circom_app {
             Ok(result.into())
         }
 
-        #[allow(dead_code)]
-        #[cfg_attr(not(disable_uniffi_export), uniffi::export)]
+        #[cfg_attr(not(feature = "no_uniffi_exports"), uniffi::export)]
         fn verify_circom_proof(
             zkey_path: String,
             proof_result: $result,
@@ -123,11 +121,11 @@ pub fn generate_circom_proof_wtns(
     json_input_str: String,
     witness_fn: WitnessFn,
 ) -> Result<CircomProofResult> {
-    let ret = CircomProver::prove(proof_lib, witness_fn, json_input_str, zkey_path).unwrap();
+    let ret = CircomProver::prove(proof_lib, witness_fn, json_input_str, zkey_path)?;
     let (proof, public_inputs) = match ret.proof.curve.as_ref() {
         CURVE_BN254 => (ret.proof.into(), ret.pub_inputs.into()),
         CURVE_BLS12_381 => (ret.proof.into(), ret.pub_inputs.into()),
-        _ => bail!("Not uspported curve"),
+        _ => bail!("Not unsupported curve"),
     };
     Ok(CircomProofResult {
         proof,
@@ -240,13 +238,12 @@ mod tests {
     mod witnesscalc {
         use super::*;
         use crate as mopro_ffi;
-        use circom_prover::witness::WitnessFn;
-        use circom_prover::witnesscalc_adapter;
 
         // Only build the witness functions for tests, don't bundle them into
         // the final library
-        witnesscalc_adapter::witness!(multiplier2);
+        witnesscalc_adapter::witness!(multiplier2_witnesscalc);
 
+        #[cfg(feature = "no_uniffi_exports")]
         #[test]
         fn test_circom_macros() {
             circom_app!(
@@ -257,7 +254,7 @@ mod tests {
             );
 
             set_circom_circuits! {
-                ("multiplier2_final.zkey", WitnessFn::WitnessCalc(multiplier2_witness)),
+                ("multiplier2_final.zkey", mopro_ffi::witness::WitnessFn::WitnessCalc(multiplier2_witnesscalc_witness)),
             }
 
             const ZKEY_PATH: &str = "../test-vectors/circom/multiplier2_final.zkey";
@@ -272,13 +269,21 @@ mod tests {
             inputs.insert("b".to_string(), vec![b.to_string()]);
 
             let input_str = serde_json::to_string(&inputs).unwrap();
-            let result = generate_circom_proof(
+            let proof = generate_circom_proof(
                 ZKEY_PATH.to_string(),
                 input_str,
                 circom_prover::prover::ProofLib::Arkworks,
-            );
+            )
+            .expect("Proof generation failed");
 
-            assert!(result.is_ok());
+            let is_valid = verify_circom_proof(
+                ZKEY_PATH.to_string(),
+                proof,
+                circom_prover::prover::ProofLib::Arkworks,
+            )
+            .expect("Proof verification failed");
+
+            assert!(is_valid, "Expected the proof to be valid");
         }
     }
 
@@ -290,7 +295,6 @@ mod tests {
         use anyhow::bail;
         use ark_ff::PrimeField;
         use circom_prover::prover::{ProofLib, PublicInputs};
-        use circom_prover::witness::WitnessFn;
         use num_bigint::{BigUint, ToBigInt};
         use std::ops::{Add, Mul};
 
@@ -303,6 +307,7 @@ mod tests {
 
         use crate as mopro_ffi;
 
+        #[cfg(feature = "no_uniffi_exports")]
         #[test]
         fn test_circom_macros() {
             circom_app!(
@@ -313,7 +318,7 @@ mod tests {
             );
 
             set_circom_circuits! {
-                ("multiplier2_final.zkey", WitnessFn::RustWitness(multiplier2_witness)),
+                ("multiplier2_final.zkey", mopro_ffi::witness::WitnessFn::RustWitness(multiplier2_witness)),
             }
 
             const ZKEY_PATH: &str = "../test-vectors/circom/multiplier2_final.zkey";
@@ -328,25 +333,39 @@ mod tests {
             inputs.insert("b".to_string(), vec![b.to_string()]);
 
             let input_str = serde_json::to_string(&inputs).unwrap();
-            let result = generate_circom_proof(
+            let proof = generate_circom_proof(
                 ZKEY_PATH.to_string(),
                 input_str,
                 circom_prover::prover::ProofLib::Arkworks,
-            );
+            )
+            .expect("Proof generation failed");
 
-            assert!(result.is_ok());
+            let is_valid = verify_circom_proof(
+                ZKEY_PATH.to_string(),
+                proof,
+                circom_prover::prover::ProofLib::Arkworks,
+            )
+            .expect("Proof verification failed");
+
+            assert!(is_valid, "Expected the proof to be valid");
         }
 
         // This should be defined by a file that the mopro package consumer authors
         // then we reference it in our build somehow
-        fn zkey_witness_map(name: &str) -> Result<WitnessFn> {
+        fn zkey_witness_map(name: &str) -> Result<mopro_ffi::witness::WitnessFn> {
             match name {
-                "multiplier2_final.zkey" => Ok(WitnessFn::RustWitness(multiplier2_witness)),
-                "keccak256_256_test_final.zkey" => {
-                    Ok(WitnessFn::RustWitness(keccak256256test_witness))
-                }
-                "hashbench_bls_final.zkey" => Ok(WitnessFn::RustWitness(hashbenchbls_witness)),
-                "multiplier2_bls_final.zkey" => Ok(WitnessFn::RustWitness(multiplier2bls_witness)),
+                "multiplier2_final.zkey" => Ok(mopro_ffi::witness::WitnessFn::RustWitness(
+                    multiplier2_witness,
+                )),
+                "keccak256_256_test_final.zkey" => Ok(mopro_ffi::witness::WitnessFn::RustWitness(
+                    keccak256256test_witness,
+                )),
+                "hashbench_bls_final.zkey" => Ok(mopro_ffi::witness::WitnessFn::RustWitness(
+                    hashbenchbls_witness,
+                )),
+                "multiplier2_bls_final.zkey" => Ok(mopro_ffi::witness::WitnessFn::RustWitness(
+                    multiplier2bls_witness,
+                )),
                 _ => bail!("Unknown circuit name"),
             }
         }
